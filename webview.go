@@ -12,8 +12,8 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/jchv/go-webview2/internal/w32"
-	"github.com/jchv/go-webview2/pkg/edge"
+	"github.com/yulon/go-webview2/internal/w32"
+	"github.com/yulon/go-webview2/pkg/edge"
 
 	"golang.org/x/sys/windows"
 )
@@ -317,8 +317,12 @@ func (w *webview) CreateWithOptions(opts WindowOptions) bool {
 		posY = w32.CW_USEDEFAULT
 	}
 
+	wsex := uintptr(0)
+	if len(opts.Title) == 0 {
+		wsex = 0x08000000
+	}
 	w.hwnd, _, _ = w32.User32CreateWindowExW.Call(
-		0,
+		wsex,
 		uintptr(unsafe.Pointer(className)),
 		uintptr(unsafe.Pointer(windowName)),
 		0xCF0000, // WS_OVERLAPPEDWINDOW
@@ -333,8 +337,10 @@ func (w *webview) CreateWithOptions(opts WindowOptions) bool {
 	)
 	setWindowContext(w.hwnd, w)
 
-	_, _, _ = w32.User32ShowWindow.Call(w.hwnd, w32.SWShow)
-	_, _, _ = w32.User32UpdateWindow.Call(w.hwnd)
+	if len(opts.Title) > 0 {
+		_, _, _ = w32.User32ShowWindow.Call(w.hwnd, w32.SWShow)
+		_, _, _ = w32.User32UpdateWindow.Call(w.hwnd)
+	}
 	_, _, _ = w32.User32SetFocus.Call(w.hwnd)
 
 	if !w.browser.Embed(w.hwnd) {
